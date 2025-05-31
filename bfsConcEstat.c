@@ -216,8 +216,8 @@ int main(int argc, char* argv[]) {
     clock_t tempoInicio, tempoFinal;
     tempoInicio = clock();
 
-    if (argc < 4) {
-        printf("Uso: %s <arquivo_grafo> <nThreads> <verticeInicial>\n", argv[0]);
+    if (argc < 3) {
+        printf("Uso: %s <arquivo_grafo> <nThreads> [verticeInicial]\n", argv[0]);
         return 1;
     }
 
@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
     }
 
     struct grafo* grafo = lerGrafoBinario(arquivo);
-    grafo->visitado[verticeInicial] = 1;
+    // grafo->visitado[verticeInicial] = 1;
 
     struct fila* filaAtualPtr = criaFila();
     struct fila* filaProxima = criaFila();

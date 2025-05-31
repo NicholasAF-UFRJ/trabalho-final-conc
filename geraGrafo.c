@@ -19,7 +19,57 @@ int aresta_existe(Aresta* arestas, int count, int origem, int destino) {
     return 0;
 }
 
-void gerar_grafo_binario(const char* nome_arquivo, int nVertices) {
+void gerar_arvore(const char* nome_arquivo, int nVertices) {
+    FILE* f = fopen(nome_arquivo, "wb");
+    if (!f) { perror("Erro ao abrir arquivo"); exit(EXIT_FAILURE); }
+
+    Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
+
+    for (int i = 1; i < nVertices; i++) {
+        int pai = rand() % i;
+        arestas[i - 1].origem = pai;
+        arestas[i - 1].destino = i;
+    }
+
+    fwrite(&nVertices, sizeof(int), 1, f);
+    int nArestas = nVertices - 1;
+    fwrite(&nArestas, sizeof(int), 1, f);
+
+    for (int i = 0; i < nArestas; i++) {
+        fwrite(&arestas[i].origem, sizeof(int), 1, f);
+        fwrite(&arestas[i].destino, sizeof(int), 1, f);
+    }
+
+    free(arestas);
+    fclose(f);
+}
+
+void gerar_arvore_binaria(const char* nome_arquivo, int nVertices) {
+    FILE* f = fopen(nome_arquivo, "wb");
+    if (!f) { perror("Erro ao abrir arquivo"); exit(EXIT_FAILURE); }
+
+    Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
+    int count = 0;
+
+    for (int i = 1; i < nVertices; i++) {
+        int pai = (i - 1) / 2; // regra da árvore binária
+        arestas[count++] = (Aresta){pai, i};
+    }
+
+    fwrite(&nVertices, sizeof(int), 1, f);
+    int nArestas = nVertices - 1;
+    fwrite(&nArestas, sizeof(int), 1, f);
+
+    for (int i = 0; i < nArestas; i++) {
+        fwrite(&arestas[i].origem, sizeof(int), 1, f);
+        fwrite(&arestas[i].destino, sizeof(int), 1, f);
+    }
+
+    free(arestas);
+    fclose(f);
+}
+
+void gerar_grafo_conexo(const char* nome_arquivo, int nVertices) {
     FILE* f = fopen(nome_arquivo, "wb");
     if (!f) {
         perror("Erro ao abrir arquivo");
@@ -27,24 +77,28 @@ void gerar_grafo_binario(const char* nome_arquivo, int nVertices) {
     }
 
     int maxArestas = MAX_ARESTAS(nVertices);
-    int minArestas = nVertices; // pelo menos conexo
+    int minArestas = nVertices;
     int nArestas = minArestas + rand() % (maxArestas - minArestas + 1);
 
     Aresta* arestas = malloc(nArestas * sizeof(Aresta));
     int count = 0;
 
+    // Primeiro conecta os vértices como uma árvore básica
+    for (int i = 1; i < nVertices; i++) {
+        arestas[count].origem = i;
+        arestas[count].destino = rand() % i;
+        count++;
+    }
+
+    // Agora adiciona arestas extras aleatórias
     while (count < nArestas) {
         int origem = rand() % nVertices;
         int destino = rand() % nVertices;
-
         if (origem != destino && !aresta_existe(arestas, count, origem, destino)) {
-            arestas[count].origem = origem;
-            arestas[count].destino = destino;
-            count++;
+            arestas[count++] = (Aresta){origem, destino};
         }
     }
 
-    // Escreve vértices e arestas no arquivo binário
     fwrite(&nVertices, sizeof(int), 1, f);
     fwrite(&nArestas, sizeof(int), 1, f);
 
@@ -64,12 +118,15 @@ int main(int argc, char *argv[]) {
     clock_t tempoInicio, tempoFinal;
     tempoInicio = clock();
 
-    if (argc < 2) {
-        printf("Uso: %s <nVertices>\n", argv[0]);
+    if (argc < 3) {
+        printf("Uso: %s <tipo> <nVertices>\n", argv[0]);
+        printf("Tipos: 1=Árvore, 2=Árvore Binária, 3=Conexo\n");
         return 1;
     }
+    
+    int tipo = atoi(argv[1]);
 
-    int nVertices = atoi(argv[1]);
+    int nVertices = atoi(argv[2]);
     if (nVertices < 2) {
         printf("Número de vértices deve ser >= 2\n");
         return 1;
@@ -77,7 +134,20 @@ int main(int argc, char *argv[]) {
 
     srand(time(NULL)); // Semente aleatória
 
-    gerar_grafo_binario("grafo.bin", nVertices);
+    switch (tipo) {
+        case 1:
+            gerar_arvore("grafoArvore.bin", nVertices);
+            break;
+        case 2:
+            gerar_arvore_binaria("grafoArvoreBin.bin", nVertices);
+            break;
+        case 3:
+            gerar_grafo_conexo("grafoConexo.bin", nVertices);
+            break;
+        default:
+            printf("Tipo inválido. Use 1 (árvore), 2 (árvore binária) ou 3 (conexo)\n");
+            return 1;
+    }
 
     tempoFinal = clock();
     double tempoTotal = (double)(tempoFinal - tempoInicio) / CLOCKS_PER_SEC;
