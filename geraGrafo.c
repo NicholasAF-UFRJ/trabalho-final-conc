@@ -113,14 +113,47 @@ void gerar_grafo_conexo(const char* nome_arquivo, int nVertices) {
     printf("Grafo com %d vértices e %d arestas gerado em '%s'\n", nVertices, nArestas, nome_arquivo);
 }
 
+void gerar_arvore_larga(const char* nome_arquivo, int nVertices, int filhosPorNo) {
+    FILE* f = fopen(nome_arquivo, "wb");
+    if (!f) {
+        perror("Erro ao abrir arquivo");
+        exit(EXIT_FAILURE);
+    }
+
+    Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
+    int arestaCount = 0;
+
+    int atual = 1; // começa com o vértice 0 como raiz
+    for (int i = 0; i < nVertices && atual < nVertices; i++) {
+        for (int j = 0; j < filhosPorNo && atual < nVertices; j++) {
+            arestas[arestaCount].origem = i;
+            arestas[arestaCount].destino = atual;
+            arestaCount++;
+            atual++;
+        }
+    }
+
+    fwrite(&nVertices, sizeof(int), 1, f);
+    fwrite(&arestaCount, sizeof(int), 1, f);
+
+    for (int i = 0; i < arestaCount; i++) {
+        fwrite(&arestas[i].origem, sizeof(int), 1, f);
+        fwrite(&arestas[i].destino, sizeof(int), 1, f);
+    }
+
+    fclose(f);
+    free(arestas);
+    printf("Grafo árvore larga gerado com %d vértices e %d arestas em '%s'\n", nVertices, arestaCount, nome_arquivo);
+}
+
 int main(int argc, char *argv[]) {
 
     clock_t tempoInicio, tempoFinal;
     tempoInicio = clock();
 
     if (argc < 3) {
-        printf("Uso: %s <tipo> <nVertices>\n", argv[0]);
-        printf("Tipos: 1=Árvore, 2=Árvore Binária, 3=Conexo\n");
+        printf("Uso: %s <tipo> <nVertices> [filhosPorNo]\n", argv[0]);
+        printf("Tipos: 1 - árvore | 2 - árvore binária | 3 - conexo | 4 - árvore larga\n");
         return 1;
     }
     
@@ -131,6 +164,8 @@ int main(int argc, char *argv[]) {
         printf("Número de vértices deve ser >= 2\n");
         return 1;
     }
+
+    int filhosPorNo = (argc >= 4) ? atoi(argv[3]) : 10;
 
     srand(time(NULL)); // Semente aleatória
 
@@ -143,6 +178,9 @@ int main(int argc, char *argv[]) {
             break;
         case 3:
             gerar_grafo_conexo("grafoConexo.bin", nVertices);
+            break;
+        case 4:
+            gerar_arvore_larga("grafoLargo.bin", nVertices, filhosPorNo);
             break;
         default:
             printf("Tipo inválido. Use 1 (árvore), 2 (árvore binária) ou 3 (conexo)\n");
