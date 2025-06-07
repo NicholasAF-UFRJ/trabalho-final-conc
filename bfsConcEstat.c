@@ -8,10 +8,6 @@
 IMPLEMENTAÇÃO BFS CONCORRENTE
 DIVISÃO DE TAREFAS ESTÁTICA
 
-NÃO FUNCIONANDO
-
-TESTAR TAMBÉM DIVISÃO DINÂMICA
-
 
 
 
@@ -25,7 +21,7 @@ TESTAR TAMBÉM DIVISÃO DINÂMICA
 #include <pthread.h>
 #include <time.h>
 
-#define TAM 10000
+#define TAM 100000
 #define MAX_THREADS 16
 
 struct fila {
@@ -57,7 +53,7 @@ int ehVazio(struct fila* fila) {
 }
 
 void enfileirar(struct fila* fila, int valor) {
-    if (fila->atras == TAM - 1) return;
+    if (fila->atras >= TAM - 1) return;
     if (fila->frente == -1) fila->frente = 0;
     fila->atras++;
     fila->itens[fila->atras] = valor;
@@ -71,6 +67,10 @@ int tiraFila(struct fila* fila) {
         if (fila->frente > fila->atras) fila->frente = fila->atras = -1;
     }
     return item;
+}
+
+void liberarFila(struct fila* fila) {
+    free(fila);
 }
 
 // ---------- Grafo ----------
@@ -120,6 +120,20 @@ struct grafo* lerGrafoBinario(const char* nomeArquivo) {
     return grafo;
 }
 
+void liberarGrafo(struct grafo* grafo) {
+    for (int i = 0; i < grafo->nVertices; i++) {
+        struct no* atual = grafo->listaAdj[i];
+        while (atual) {
+            struct no* temp = atual;
+            atual = atual->proximo;
+            free(temp);
+        }
+    }
+    free(grafo->listaAdj);
+    free(grafo->visitado);
+    free(grafo);
+}
+
 // ---------- Sincronização ----------
 int nThreads;
 int bloqueadas = 0;
@@ -145,7 +159,7 @@ struct thread_args {
     struct fila** filaAtualPtr;
     struct fila* filaProxima;
     int* nivelAtual;
-    pthread_mutex_t* mutexVisitado;
+    pthread_mutex_t* mutexesVisitado;
     pthread_mutex_t* mutexFila;
 };
 
@@ -157,7 +171,8 @@ void* bfs_thread(void* arg) {
     while (1) {
         struct fila* filaAtual = *args->filaAtualPtr;
 
-        int tamFila = filaAtual->atras - filaAtual->frente + 1;
+        int tamFila = (filaAtual->frente == -1) ? 0 : (filaAtual->atras - filaAtual->frente + 1);
+
         if (tamFila <= 0) break;
 
         int porThread = (tamFila + nThreads - 1) / nThreads;
@@ -166,14 +181,20 @@ void* bfs_thread(void* arg) {
         if (fim > filaAtual->atras + 1) fim = filaAtual->atras + 1;
 
         for (int i = ini; i < fim; i++) {
+            if (i > filaAtual->atras) break;
+
             int v = filaAtual->itens[i];
+            if (v < 0 || v >= grafo->nVertices) {
+                fprintf(stderr, "[ERRO] Vértice inválido: %d\n", v);
+                continue;
+            }
             struct no* temp = grafo->listaAdj[v];
             while (temp) {
                 int adj = temp->vertice;
-                pthread_mutex_lock(args->mutexVisitado);
+                pthread_mutex_lock(&args->mutexesVisitado[adj]);
                 if (!grafo->visitado[adj]) {
                     grafo->visitado[adj] = 1;
-                    pthread_mutex_unlock(args->mutexVisitado);
+                    pthread_mutex_unlock(&args->mutexesVisitado[adj]);
 
                     printf("visitado %d pela thread %d\n", adj, id);
 
@@ -181,7 +202,7 @@ void* bfs_thread(void* arg) {
                     enfileirar(args->filaProxima, adj);
                     pthread_mutex_unlock(args->mutexFila);
                 } else {
-                    pthread_mutex_unlock(args->mutexVisitado);
+                    pthread_mutex_unlock(&args->mutexesVisitado[adj]);
                 }
                 temp = temp->proximo;
             }
@@ -231,7 +252,11 @@ int main(int argc, char* argv[]) {
     }
 
     struct grafo* grafo = lerGrafoBinario(arquivo);
-    // grafo->visitado[verticeInicial] = 1;
+    
+    pthread_mutex_t* mutexesVisitado = malloc(grafo->nVertices * sizeof(pthread_mutex_t));
+    for (int i = 0; i < grafo->nVertices; i++) pthread_mutex_init(&mutexesVisitado[i], NULL);
+    
+    grafo->visitado[verticeInicial] = 1;
 
     struct fila* filaAtualPtr = criaFila();
     struct fila* filaProxima = criaFila();
@@ -239,7 +264,6 @@ int main(int argc, char* argv[]) {
 
     pthread_t threads[MAX_THREADS];
     struct thread_args args[MAX_THREADS];
-    pthread_mutex_t mutexVisitado = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mutexFila = PTHREAD_MUTEX_INITIALIZER;
 
     for (int i = 0; i < nThreads; i++) {
@@ -247,7 +271,7 @@ int main(int argc, char* argv[]) {
         args[i].grafo = grafo;
         args[i].filaAtualPtr = &filaAtualPtr;
         args[i].filaProxima = filaProxima;
-        args[i].mutexVisitado = &mutexVisitado;
+        args[i].mutexesVisitado = mutexesVisitado;
         args[i].mutexFila = &mutexFila;
         pthread_create(&threads[i], NULL, bfs_thread, &args[i]);
     }
@@ -259,5 +283,21 @@ int main(int argc, char* argv[]) {
     tempoFinal = clock();
     double tempoTotal = (double)(tempoFinal - tempoInicio) / CLOCKS_PER_SEC;
     printf("Tempo total para calcular BFS concorrente com %d: %.3lf segundos\n", nThreads, tempoTotal);    
+
+    if (filaAtualPtr == filaProxima) {
+        liberarFila(filaAtualPtr);
+    } else {
+        liberarFila(filaAtualPtr);
+        liberarFila(filaProxima);
+    }
+
+    int n = grafo->nVertices;
+
+    liberarGrafo(grafo);
+
+    for (int i = 0; i < n; i++)
+        pthread_mutex_destroy(&mutexesVisitado[i]);
+    free(mutexesVisitado);
+
     return 0;
 }

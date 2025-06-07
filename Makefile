@@ -2,13 +2,13 @@ CC = gcc
 CFLAGS = -Wall -O2
 
 # Alvos (executáveis)
-all: geraGrafo leArqBinario bfsSeq bfsConcEstat bfsConcDin
+all: geraGrafo leBin bfsSeq bfsConcEstat bfsConcDin
 
 geraGrafo: geraGrafo.c
 	$(CC) $(CFLAGS) -o geraGrafo geraGrafo.c
 
-leArqBinario: leArqBinario.c
-	$(CC) $(CFLAGS) -o leArqBinario leArqBinario.c
+leBin: leBin.c
+	$(CC) $(CFLAGS) -o leBin leBin.c
 
 bfsSeq: bfsSeq.c
 	$(CC) $(CFLAGS) -o bfsSeq bfsSeq.c
@@ -20,4 +20,4 @@ bfsConcDin: bfsConcDin.c
 	$(CC) $(CFLAGS) -o bfsConcDin bfsConcDin.c
 
 clean:
-	rm -f geraGrafo leArqBinario bfsSeq bfsConcEstat bfsConcDin *.o
+	rm -f geraGrafo leBin bfsSeq bfsConcEstat bfsConcDin *.o

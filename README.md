@@ -4,21 +4,29 @@ Repositório para o trabalho final da disciplina de Programação Concorrente de
 
 Consiste na implementação do algoritmo de busca em largura (Breadth First Search - BFS) em C, de forma sequencial e concorrente. 
 
+Passo a passo:
 
-Testes:
+1) Compilar todos os programas:
 
-./geraGrafo 1 1000
-./geraGrafo 2 1000
-./geraGrafo 3 1000
+```bash
+make
+```
 
-./bfsSeq grafoArvore.bin 
-./bfsSeq grafoArvoreBin.bin 
-./bfsSeq grafoConexo.bin
+2) Execução (exemplos):
 
-./bfsConcEstat grafoArvore.bin 8
-./bfsConcEstat grafoArvoreBin.bin 8 
-./bfsConcEstat grafoConexo.bin 8
+```bash
+# BFS sequencial
+./bfsSeq arvore
 
-./bfsConcDin grafoArvore.bin 8
-./bfsConcDin grafoArvoreBin.bin 8 
-./bfsConcDin grafoConexo.bin 8
+# BFS alocação estática de tarefas/thread com 4 threads
+./bfsConcEstat arvore 4
+
+# BFS alocação dinâmica de tarefas/thread com 4 threads
+./bfsConcDin arvore 4
+```
+
+3) Limpar binários e executáveis:
+
+```bash
+make clean
+```

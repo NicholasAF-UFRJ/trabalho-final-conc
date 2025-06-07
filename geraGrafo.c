@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <stdbool.h>
 
 #define MAX_ARESTAS(v) ((v) * ((v) - 1) / 2)
 
@@ -9,187 +11,155 @@ typedef struct {
     int destino;
 } Aresta;
 
-int aresta_existe(Aresta* arestas, int count, int origem, int destino) {
-    for (int i = 0; i < count; i++) {
-        if ((arestas[i].origem == origem && arestas[i].destino == destino) ||
-            (arestas[i].origem == destino && arestas[i].destino == origem)) {
-            return 1;
-        }
+// Função auxiliar para salvar o grafo
+void salvar_grafo(const char* nome_arquivo, Aresta* arestas, int nVertices, int nArestas) {
+    FILE* f = fopen(nome_arquivo, "wb");
+    if (!f) { perror("Erro ao abrir arquivo"); exit(EXIT_FAILURE); }
+
+    fwrite(&nVertices, sizeof(int), 1, f);
+    fwrite(&nArestas, sizeof(int), 1, f);
+    for (int i = 0; i < nArestas; i++) {
+        fwrite(&arestas[i].origem, sizeof(int), 1, f);
+        fwrite(&arestas[i].destino, sizeof(int), 1, f);
     }
-    return 0;
+    fclose(f);
 }
 
 void gerar_arvore(const char* nome_arquivo, int nVertices) {
-    FILE* f = fopen(nome_arquivo, "wb");
-    if (!f) { perror("Erro ao abrir arquivo"); exit(EXIT_FAILURE); }
-
     Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
-
     for (int i = 1; i < nVertices; i++) {
         int pai = rand() % i;
-        arestas[i - 1].origem = pai;
-        arestas[i - 1].destino = i;
+        arestas[i - 1] = (Aresta){pai, i};
     }
-
-    fwrite(&nVertices, sizeof(int), 1, f);
-    int nArestas = nVertices - 1;
-    fwrite(&nArestas, sizeof(int), 1, f);
-
-    for (int i = 0; i < nArestas; i++) {
-        fwrite(&arestas[i].origem, sizeof(int), 1, f);
-        fwrite(&arestas[i].destino, sizeof(int), 1, f);
-    }
-
+    salvar_grafo(nome_arquivo, arestas, nVertices, nVertices - 1);
     free(arestas);
-    fclose(f);
 }
 
 void gerar_arvore_binaria(const char* nome_arquivo, int nVertices) {
-    FILE* f = fopen(nome_arquivo, "wb");
-    if (!f) { perror("Erro ao abrir arquivo"); exit(EXIT_FAILURE); }
-
     Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
-    int count = 0;
-
     for (int i = 1; i < nVertices; i++) {
-        int pai = (i - 1) / 2; // regra da árvore binária
-        arestas[count++] = (Aresta){pai, i};
+        arestas[i - 1] = (Aresta){(i - 1) / 2, i};
     }
-
-    fwrite(&nVertices, sizeof(int), 1, f);
-    int nArestas = nVertices - 1;
-    fwrite(&nArestas, sizeof(int), 1, f);
-
-    for (int i = 0; i < nArestas; i++) {
-        fwrite(&arestas[i].origem, sizeof(int), 1, f);
-        fwrite(&arestas[i].destino, sizeof(int), 1, f);
-    }
-
+    salvar_grafo(nome_arquivo, arestas, nVertices, nVertices - 1);
     free(arestas);
-    fclose(f);
+}
+
+void gerar_arvore_larga(const char* nome_arquivo, int nVertices, int filhosPorNo) {
+    Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
+    int atual = 1, count = 0;
+    for (int i = 0; i < nVertices && atual < nVertices; i++) {
+        for (int j = 0; j < filhosPorNo && atual < nVertices; j++) {
+            arestas[count++] = (Aresta){i, atual++};
+        }
+    }
+    salvar_grafo(nome_arquivo, arestas, nVertices, count);
+    free(arestas);
 }
 
 void gerar_grafo_conexo(const char* nome_arquivo, int nVertices) {
-    FILE* f = fopen(nome_arquivo, "wb");
-    if (!f) {
-        perror("Erro ao abrir arquivo");
-        exit(EXIT_FAILURE);
-    }
-
     int maxArestas = MAX_ARESTAS(nVertices);
     int minArestas = nVertices;
     int nArestas = minArestas + rand() % (maxArestas - minArestas + 1);
 
     Aresta* arestas = malloc(nArestas * sizeof(Aresta));
-    int count = 0;
+    bool* adj = calloc(nVertices * nVertices, sizeof(bool));
 
-    // Primeiro conecta os vértices como uma árvore básica
+    int count = 0;
     for (int i = 1; i < nVertices; i++) {
-        arestas[count].origem = i;
-        arestas[count].destino = rand() % i;
+        int destino = rand() % i;
+        arestas[count] = (Aresta){i, destino};
+        adj[i * nVertices + destino] = true;
+        adj[destino * nVertices + i] = true;
         count++;
     }
 
-    // Agora adiciona arestas extras aleatórias
     while (count < nArestas) {
-        int origem = rand() % nVertices;
-        int destino = rand() % nVertices;
-        if (origem != destino && !aresta_existe(arestas, count, origem, destino)) {
-            arestas[count++] = (Aresta){origem, destino};
+        int a = rand() % nVertices;
+        int b = rand() % nVertices;
+        if (a != b && !adj[a * nVertices + b]) {
+            arestas[count++] = (Aresta){a, b};
+            adj[a * nVertices + b] = true;
+            adj[b * nVertices + a] = true;
         }
     }
 
-    fwrite(&nVertices, sizeof(int), 1, f);
-    fwrite(&nArestas, sizeof(int), 1, f);
-
-    for (int i = 0; i < nArestas; i++) {
-        fwrite(&arestas[i].origem, sizeof(int), 1, f);
-        fwrite(&arestas[i].destino, sizeof(int), 1, f);
-    }
-
-    fclose(f);
+    salvar_grafo(nome_arquivo, arestas, nVertices, nArestas);
     free(arestas);
-
-    printf("Grafo com %d vértices e %d arestas gerado em '%s'\n", nVertices, nArestas, nome_arquivo);
+    free(adj);
 }
 
-void gerar_arvore_larga(const char* nome_arquivo, int nVertices, int filhosPorNo) {
-    FILE* f = fopen(nome_arquivo, "wb");
-    if (!f) {
-        perror("Erro ao abrir arquivo");
-        exit(EXIT_FAILURE);
+void gerar_grafo_pequeno(const char* nome_arquivo) {
+    int nVertices = 6;
+    Aresta arestas[] = {
+        {0, 1}, {0, 2}, {1, 3}, {1, 4}, {2, 5}
+    };
+    salvar_grafo(nome_arquivo, arestas, nVertices, 5);
+}
+
+void gerar_grafo_com_ciclo(const char* nome_arquivo, int nVertices) {
+    Aresta* arestas = malloc((nVertices + 1) * sizeof(Aresta));
+    for (int i = 1; i < nVertices; i++) {
+        arestas[i - 1] = (Aresta){i - 1, i};
     }
+    arestas[nVertices - 1] = (Aresta){nVertices - 1, 0};
+    salvar_grafo(nome_arquivo, arestas, nVertices, nVertices);
+    free(arestas);
+}
 
-    Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
-    int arestaCount = 0;
+void gerar_grafo_isolado(const char* nome_arquivo, int nVertices) {
+    Aresta arestas[] = {{0, 1}, {2, 3}};
+    salvar_grafo(nome_arquivo, arestas, nVertices, 2);
+}
 
-    int atual = 1; // começa com o vértice 0 como raiz
-    for (int i = 0; i < nVertices && atual < nVertices; i++) {
-        for (int j = 0; j < filhosPorNo && atual < nVertices; j++) {
-            arestas[arestaCount].origem = i;
-            arestas[arestaCount].destino = atual;
-            arestaCount++;
-            atual++;
+void gerar_grafo_completo(const char* nome_arquivo, int nVertices) {
+    int nArestas = MAX_ARESTAS(nVertices);
+    Aresta* arestas = malloc(nArestas * sizeof(Aresta));
+    int count = 0;
+    for (int i = 0; i < nVertices; i++) {
+        for (int j = i + 1; j < nVertices; j++) {
+            arestas[count++] = (Aresta){i, j};
         }
     }
-
-    fwrite(&nVertices, sizeof(int), 1, f);
-    fwrite(&arestaCount, sizeof(int), 1, f);
-
-    for (int i = 0; i < arestaCount; i++) {
-        fwrite(&arestas[i].origem, sizeof(int), 1, f);
-        fwrite(&arestas[i].destino, sizeof(int), 1, f);
-    }
-
-    fclose(f);
+    salvar_grafo(nome_arquivo, arestas, nVertices, count);
     free(arestas);
-    printf("Grafo árvore larga gerado com %d vértices e %d arestas em '%s'\n", nVertices, arestaCount, nome_arquivo);
+}
+
+void gerar_grafo_linear(const char* nome_arquivo, int nVertices) {
+    Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
+    for (int i = 0; i < nVertices - 1; i++) {
+        arestas[i] = (Aresta){i, i + 1};
+    }
+    salvar_grafo(nome_arquivo, arestas, nVertices, nVertices - 1);
+    free(arestas);
 }
 
 int main(int argc, char *argv[]) {
-
-    clock_t tempoInicio, tempoFinal;
-    tempoInicio = clock();
-
     if (argc < 3) {
         printf("Uso: %s <tipo> <nVertices> [filhosPorNo]\n", argv[0]);
-        printf("Tipos: 1 - árvore | 2 - árvore binária | 3 - conexo | 4 - árvore larga\n");
+        printf("Tipos: 1-Arvore | 2-Binaria | 3-Conexo | 4-Larga | 5-Pequeno | 6-Ciclo | 7-Isolado | 8-Completo | 9-Linear\n");
         return 1;
     }
-    
+
     int tipo = atoi(argv[1]);
-
     int nVertices = atoi(argv[2]);
-    if (nVertices < 2) {
-        printf("Número de vértices deve ser >= 2\n");
-        return 1;
-    }
-
+    const char* nomeArquivo;
     int filhosPorNo = (argc >= 4) ? atoi(argv[3]) : 10;
 
-    srand(time(NULL)); // Semente aleatória
+    srand(time(NULL));
 
     switch (tipo) {
-        case 1:
-            gerar_arvore("grafoArvore.bin", nVertices);
-            break;
-        case 2:
-            gerar_arvore_binaria("grafoArvoreBin.bin", nVertices);
-            break;
-        case 3:
-            gerar_grafo_conexo("grafoConexo.bin", nVertices);
-            break;
-        case 4:
-            gerar_arvore_larga("grafoLargo.bin", nVertices, filhosPorNo);
-            break;
-        default:
-            printf("Tipo inválido. Use 1 (árvore), 2 (árvore binária) ou 3 (conexo)\n");
-            return 1;
+        case 1: nomeArquivo = "arvore"; gerar_arvore(nomeArquivo, nVertices); break;
+        case 2: nomeArquivo = "arvoreBinaria"; gerar_arvore_binaria(nomeArquivo, nVertices); break;
+        case 3: nomeArquivo = "grafoConexo"; gerar_grafo_conexo(nomeArquivo, nVertices); break;
+        case 4: nomeArquivo = "arvoreLarga"; gerar_arvore_larga(nomeArquivo, nVertices, filhosPorNo); break;
+        case 5: nomeArquivo = "grafoPequeno"; gerar_grafo_pequeno(nomeArquivo); break;
+        case 6: nomeArquivo = "grafoCiclo"; gerar_grafo_com_ciclo(nomeArquivo, nVertices); break;
+        case 7: nomeArquivo = "grafoIsolado"; gerar_grafo_isolado(nomeArquivo, nVertices); break;
+        case 8: nomeArquivo = "grafoCompleto"; gerar_grafo_completo(nomeArquivo, nVertices); break;
+        case 9: nomeArquivo = "grafoLinear"; gerar_grafo_linear(nomeArquivo, nVertices); break;
+        default: printf("Tipo invalido.\n"); return 1;
     }
 
-    tempoFinal = clock();
-    double tempoTotal = (double)(tempoFinal - tempoInicio) / CLOCKS_PER_SEC;
-    printf("Tempo total para gerar grafo: %.3lf segundos\n", tempoTotal);
-
+    printf("Grafo gerado em '%s' com tipo %d.\n", nomeArquivo, tipo);
     return 0;
 }

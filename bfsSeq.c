@@ -14,6 +14,7 @@ struct fila {
     int itens[TAM];
     int frente;
     int atras;
+    int tamanho;
 };
 
 struct no {
@@ -36,8 +37,9 @@ struct no* criarNo(int v) {
 
 struct fila* criaFila() {
     struct fila* fila = malloc(sizeof(struct fila));
-    fila->frente = -1;
-    fila->atras = -1;
+    fila->frente = 0;
+    fila->atras = 0;
+    fila->tamanho = 0;
     return fila;
 }
 
@@ -64,29 +66,42 @@ void adicionarAresta(struct grafo* grafo, int inicio, int destino) {
 }
 
 int ehVazio(struct fila* fila) {
-    return fila->atras == -1;
+    return fila->tamanho == 0;
 }
 
 void enfileirar(struct fila* fila, int valor) {
-    if (fila->atras == TAM - 1) {
-        printf("Fila cheia!\n");
+    if (fila->tamanho == TAM) {
+        fprintf(stderr, "Erro: fila circular cheia ao enfileirar %d\n", valor);
         return;
     }
-    if (fila->frente == -1)
-        fila->frente = 0;
-    fila->atras++;
     fila->itens[fila->atras] = valor;
+    fila->atras = (fila->atras + 1) % TAM;
+    fila->tamanho++;
 }
 
 int tiraFila(struct fila* fila) {
-    int item = -1;
-    if (!ehVazio(fila)) {
-        item = fila->itens[fila->frente];
-        fila->frente++;
-        if (fila->frente > fila->atras)
-            fila->frente = fila->atras = -1;
+    if (fila->tamanho == 0) {
+        fprintf(stderr, "Erro: tentativa de tirar elemento de fila vazia\n");
+        return -1;
     }
-    return item;
+    int valor = fila->itens[fila->frente];
+    fila->frente = (fila->frente + 1) % TAM;
+    fila->tamanho--;
+    return valor;
+}
+
+void liberarGrafo(struct grafo* grafo) {
+    for (int i = 0; i < grafo->nVertices; i++) {
+        struct no* atual = grafo->listaAdj[i];
+        while (atual) {
+            struct no* temp = atual;
+            atual = atual->proximo;
+            free(temp);
+        }
+    }
+    free(grafo->listaAdj);
+    free(grafo->visitado);
+    free(grafo);
 }
 
 void bfs(struct grafo* grafo, int verticeInicio) {
@@ -127,8 +142,10 @@ struct grafo* lerGrafoBinario(const char* nomeArquivo) {
     struct grafo* grafo = criarGrafo(nVertices);
     for (int i = 0; i < nArestas; i++) {
         int origem, destino;
-        fread(&origem, sizeof(int), 1, f);
-        fread(&destino, sizeof(int), 1, f);
+        if (fread(&origem, sizeof(int), 1, f) != 1 || fread(&destino, sizeof(int), 1, f) != 1) {
+            fprintf(stderr, "Erro ao ler aresta %d do arquivo\n", i);
+            exit(EXIT_FAILURE);
+        }
         adicionarAresta(grafo, origem, destino);
     }
 
@@ -150,11 +167,20 @@ int main(int argc, char *argv[]) {
     int verticeInicial = (argc >= 3) ? atoi(argv[2]) : 0;
 
     struct grafo* grafo = lerGrafoBinario(nomeArquivo);
+
+    if (grafo->nVertices > TAM) {
+        fprintf(stderr, "Erro: número de vértices (%d) excede capacidade da fila (%d)\n", grafo->nVertices, TAM);
+        liberarGrafo(grafo);
+        return 1;
+    }
+    
     bfs(grafo, verticeInicial);
 
     tempoFinal = clock();
     double tempoTotal = (double)(tempoFinal - tempoInicio) / CLOCKS_PER_SEC;
     printf("Tempo total para calcular BFS sequencial: %.3lf segundos\n", tempoTotal);
+
+    liberarGrafo(grafo);
 
     return 0;
 }
