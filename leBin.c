@@ -1,3 +1,12 @@
+/* 
+
+Arquivo para ler um grafo armazenado em um arquivo binário.
+
+Entrada: ./leBin <arquivoGrafoBinario>
+Saída: Imprime o número de vértices, o número de arestas e a lista de arestas do grafo.
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -1,20 +1,24 @@
-#!/bin/bash
+# Arquivo que executa os testes de desempenho dos algoritmos BFS
+
+# Entrada: ./run_tests.sh <número de vértices>
+
+# Saída: Gera um arquivo de resultados.txt com os tempos médios de execução
+# Compila os programas necessários e executa os testes de desempenho 
+# para diferentes tipos de grafos (todos os grafos menos pequeno e isolado).
 
 # Configurações
-VERTICES=1000
+VERTICES=$1
 TIPOS=(1 2 3 4 6 8 9)  # Ignora 5 (pequeno) e 7 (isolado)
 TIPOS_NOMES=("arvore" "arvoreBinaria" "grafoConexo" "arvoreLarga" "grafoCiclo" "grafoCompleto" "grafoLinear")
 THREADS=(2 4 8 16)
 ARQUIVO_RESULTADOS="resultados.txt"
 
-# Limpa o arquivo de resultados
 echo "Resultados de execução ($VERTICES vértices - média de 2 execuções)" > "$ARQUIVO_RESULTADOS"
 echo "---------------------------------------------------------------" >> "$ARQUIVO_RESULTADOS"
 
 # Define formato de tempo
 TIMEFORMAT='%3R'
 
-# Compila se necessário
 make > /dev/null
 
 # Função para calcular média de 2 tempos em segundos com 3 casas decimais

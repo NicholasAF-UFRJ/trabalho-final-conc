@@ -1,3 +1,16 @@
+/*
+
+Arquivo para a geração de grafos em C.
+Este programa gera diferentes tipos de grafos e os salva em arquivos binários.
+
+Entrada: ./geraGrafo <tipo> <nVertices> [filhosPorNo]
+Tipos: 1-Arvore | 2-Binaria | 3-Conexo | 4-Larga | 5-Pequeno | 6-Ciclo | 
+7-Isolado | 8-Completo | 9-Linear
+
+Saída: Arquivos binários com o nome correspondente ao tipo de grafo gerado.	
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +38,7 @@ void salvar_grafo(const char* nome_arquivo, Aresta* arestas, int nVertices, int 
     fclose(f);
 }
 
+// Função para gerar uma árvore aleatória
 void gerar_arvore(const char* nome_arquivo, int nVertices) {
     Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
     for (int i = 1; i < nVertices; i++) {
@@ -35,6 +49,7 @@ void gerar_arvore(const char* nome_arquivo, int nVertices) {
     free(arestas);
 }
 
+// Função para gerar uma árvore binária
 void gerar_arvore_binaria(const char* nome_arquivo, int nVertices) {
     Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
     for (int i = 1; i < nVertices; i++) {
@@ -44,6 +59,7 @@ void gerar_arvore_binaria(const char* nome_arquivo, int nVertices) {
     free(arestas);
 }
 
+// Função para gerar uma árvore larga
 void gerar_arvore_larga(const char* nome_arquivo, int nVertices, int filhosPorNo) {
     Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
     int atual = 1, count = 0;
@@ -56,6 +72,7 @@ void gerar_arvore_larga(const char* nome_arquivo, int nVertices, int filhosPorNo
     free(arestas);
 }
 
+// Função para gerar um grafo conexo
 void gerar_grafo_conexo(const char* nome_arquivo, int nVertices) {
     int maxArestas = MAX_ARESTAS(nVertices);
     int minArestas = nVertices;
@@ -88,6 +105,7 @@ void gerar_grafo_conexo(const char* nome_arquivo, int nVertices) {
     free(adj);
 }
 
+// Função para gerar um grafo pequeno com valores fixos
 void gerar_grafo_pequeno(const char* nome_arquivo) {
     int nVertices = 6;
     Aresta arestas[] = {
@@ -96,6 +114,7 @@ void gerar_grafo_pequeno(const char* nome_arquivo) {
     salvar_grafo(nome_arquivo, arestas, nVertices, 5);
 }
 
+// Função para gerar um grafo com ciclo
 void gerar_grafo_com_ciclo(const char* nome_arquivo, int nVertices) {
     Aresta* arestas = malloc((nVertices + 1) * sizeof(Aresta));
     for (int i = 1; i < nVertices; i++) {
@@ -106,11 +125,13 @@ void gerar_grafo_com_ciclo(const char* nome_arquivo, int nVertices) {
     free(arestas);
 }
 
+// Função para gerar um grafo isolado com valores fixos
 void gerar_grafo_isolado(const char* nome_arquivo, int nVertices) {
     Aresta arestas[] = {{0, 1}, {2, 3}};
     salvar_grafo(nome_arquivo, arestas, nVertices, 2);
 }
 
+// Função para gerar um grafo completo
 void gerar_grafo_completo(const char* nome_arquivo, int nVertices) {
     int nArestas = MAX_ARESTAS(nVertices);
     Aresta* arestas = malloc(nArestas * sizeof(Aresta));
@@ -124,6 +145,7 @@ void gerar_grafo_completo(const char* nome_arquivo, int nVertices) {
     free(arestas);
 }
 
+// Função para gerar um grafo linear
 void gerar_grafo_linear(const char* nome_arquivo, int nVertices) {
     Aresta* arestas = malloc((nVertices - 1) * sizeof(Aresta));
     for (int i = 0; i < nVertices - 1; i++) {
@@ -143,6 +165,7 @@ int main(int argc, char *argv[]) {
     int tipo = atoi(argv[1]);
     int nVertices = atoi(argv[2]);
     const char* nomeArquivo;
+    // Número de filhos por nó para árvores largas
     int filhosPorNo = (argc >= 4) ? atoi(argv[3]) : 10;
 
     srand(time(NULL));

@@ -1,3 +1,6 @@
+# Makefile para compilar os programas de geração e leitura de grafos,
+# além das implementações de BFS sequencial e concorrente.
+
 CC = gcc
 CFLAGS = -Wall -O2
 
@@ -18,8 +21,6 @@ bfsConcEstat: bfsConcEstat.c
 
 bfsConcDin: bfsConcDin.c
 	$(CC) $(CFLAGS) -o bfsConcDin bfsConcDin.c
-
-
 
 clean:
 	rm -f geraGrafo leBin bfsSeq bfsConcEstat bfsConcDin *.o

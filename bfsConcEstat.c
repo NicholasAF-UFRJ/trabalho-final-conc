@@ -1,20 +1,13 @@
 /*
 
+Arquivo execução do algoritmo de busca em largura (BFS) concorrente
+com mutexes e barreira de sincronização e divisão estática da fila.
 
+Entrada: ./bfsConcEstat <arquivo_grafo> <nThreads> [verticeInicial]
 
-
-
-
-IMPLEMENTAÇÃO BFS CONCORRENTE
-DIVISÃO DE TAREFAS ESTÁTICA
-
-
-
-
-
+Saída: Imprime o tempo total para calcular BFS concorrente.
 
 */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +16,8 @@ DIVISÃO DE TAREFAS ESTÁTICA
 
 #define TAM 100000
 #define MAX_THREADS 16
+
+// Estruturas
 
 struct fila {
     int itens[TAM];
@@ -40,7 +35,8 @@ struct grafo {
     int* visitado;
 };
 
-// ---------- Fila ----------
+// Operações com fila
+
 struct fila* criaFila() {
     struct fila* fila = malloc(sizeof(struct fila));
     fila->frente = -1;
@@ -73,7 +69,8 @@ void liberarFila(struct fila* fila) {
     free(fila);
 }
 
-// ---------- Grafo ----------
+// Operações com grafo 
+
 struct no* criarNo(int v) {
     struct no* novoNo = malloc(sizeof(struct no));
     novoNo->vertice = v;
@@ -93,6 +90,7 @@ struct grafo* criarGrafo(int vertices) {
     return grafo;
 }
 
+// Adiciona arestas bidirecionais (grafo não direcionado)
 void adicionarAresta(struct grafo* grafo, int inicio, int destino) {
     struct no* novoNo = criarNo(destino);
     novoNo->proximo = grafo->listaAdj[inicio];
@@ -103,6 +101,7 @@ void adicionarAresta(struct grafo* grafo, int inicio, int destino) {
     grafo->listaAdj[destino] = novoNo;
 }
 
+// Leitura do grafo a partir de arquivo binário
 struct grafo* lerGrafoBinario(const char* nomeArquivo) {
     FILE* f = fopen(nomeArquivo, "rb");
     if (!f) { perror("Erro ao abrir arquivo"); exit(EXIT_FAILURE); }
@@ -120,6 +119,7 @@ struct grafo* lerGrafoBinario(const char* nomeArquivo) {
     return grafo;
 }
 
+// Liberação da memória usada pelo grafo
 void liberarGrafo(struct grafo* grafo) {
     for (int i = 0; i < grafo->nVertices; i++) {
         struct no* atual = grafo->listaAdj[i];
@@ -134,12 +134,14 @@ void liberarGrafo(struct grafo* grafo) {
     free(grafo);
 }
 
-// ---------- Sincronização ----------
+// Barreira de sincronização
+
 int nThreads;
 int bloqueadas = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
+// Sincronização entre threads a cada nível da BFS
 void barreira(int nthreads) {
     pthread_mutex_lock(&mutex);
     if (bloqueadas == (nthreads - 1)) {
@@ -152,7 +154,8 @@ void barreira(int nthreads) {
     pthread_mutex_unlock(&mutex);
 }
 
-// ---------- BFS Concorrente ----------
+// Estrutura e função da thread 
+
 struct thread_args {
     int id;
     struct grafo* grafo;
@@ -163,6 +166,7 @@ struct thread_args {
     pthread_mutex_t* mutexFila;
 };
 
+// Função executada por cada thread
 void* bfs_thread(void* arg) {
     struct thread_args* args = (struct thread_args*) arg;
     int id = args->id;
@@ -171,8 +175,8 @@ void* bfs_thread(void* arg) {
     while (1) {
         struct fila* filaAtual = *args->filaAtualPtr;
 
+        // Divide a fila entre as threads de forma estática
         int tamFila = (filaAtual->frente == -1) ? 0 : (filaAtual->atras - filaAtual->frente + 1);
-
         if (tamFila <= 0) break;
 
         int porThread = (tamFila + nThreads - 1) / nThreads;
@@ -184,26 +188,26 @@ void* bfs_thread(void* arg) {
             if (i > filaAtual->atras) break;
 
             int v = filaAtual->itens[i];
-            if (v < 0 || v >= grafo->nVertices) {
-                fprintf(stderr, "[ERRO] Vértice inválido: %d\n", v);
-                continue;
-            }
+            if (v < 0 || v >= grafo->nVertices) continue;
+
             struct no* temp = grafo->listaAdj[v];
             while (temp) {
                 int adj = temp->vertice;
+
+                // Verifica se adjacente já foi visitado
                 pthread_mutex_lock(&args->mutexesVisitado[adj]);
                 if (!grafo->visitado[adj]) {
                     grafo->visitado[adj] = 1;
                     pthread_mutex_unlock(&args->mutexesVisitado[adj]);
 
-                    //printf("visitado %d pela thread %d\n", adj, id);
-
+                    // Região crítica para acesso à fila
                     pthread_mutex_lock(args->mutexFila);
                     enfileirar(args->filaProxima, adj);
                     pthread_mutex_unlock(args->mutexFila);
                 } else {
                     pthread_mutex_unlock(&args->mutexesVisitado[adj]);
                 }
+
                 temp = temp->proximo;
             }
         }
@@ -224,14 +228,15 @@ void* bfs_thread(void* arg) {
 
         barreira(nThreads);
 
+        // Encerramento se não há mais vértices
         if (ehVazio(*args->filaAtualPtr)) break;
     }
 
     return NULL;
 }
 
+// Função principal 
 
-// ---------- MAIN ----------
 int main(int argc, char* argv[]) {
 
     clock_t tempoInicio, tempoFinal;
@@ -245,6 +250,8 @@ int main(int argc, char* argv[]) {
     const char* arquivo = argv[1];
     nThreads = atoi(argv[2]);
     int verticeInicial = (argc >= 4) ? atoi(argv[3]) : 0;
+    int imprimir = (argc >= 5) ? atoi(argv[4]) : 0;
+
 
     if (nThreads < 1 || nThreads > MAX_THREADS) {
         printf("Número de threads deve estar entre 1 e %d\n", MAX_THREADS);
@@ -253,11 +260,13 @@ int main(int argc, char* argv[]) {
 
     struct grafo* grafo = lerGrafoBinario(arquivo);
     
+    // Inicializa mutex para cada vértice
     pthread_mutex_t* mutexesVisitado = malloc(grafo->nVertices * sizeof(pthread_mutex_t));
     for (int i = 0; i < grafo->nVertices; i++) pthread_mutex_init(&mutexesVisitado[i], NULL);
     
     grafo->visitado[verticeInicial] = 1;
 
+    // Filas para níveis atual e próximo
     struct fila* filaAtualPtr = criaFila();
     struct fila* filaProxima = criaFila();
     enfileirar(filaAtualPtr, verticeInicial);
@@ -266,6 +275,7 @@ int main(int argc, char* argv[]) {
     struct thread_args args[MAX_THREADS];
     pthread_mutex_t mutexFila = PTHREAD_MUTEX_INITIALIZER;
 
+    // Criação das threads
     for (int i = 0; i < nThreads; i++) {
         args[i].id = i;
         args[i].grafo = grafo;
@@ -276,6 +286,7 @@ int main(int argc, char* argv[]) {
         pthread_create(&threads[i], NULL, bfs_thread, &args[i]);
     }
 
+    // Espera todas as threads terminarem
     for (int i = 0; i < nThreads; i++) {
         pthread_join(threads[i], NULL);
     }
@@ -292,7 +303,7 @@ int main(int argc, char* argv[]) {
     }
 
     int n = grafo->nVertices;
-
+    
     liberarGrafo(grafo);
 
     for (int i = 0; i < n; i++)
