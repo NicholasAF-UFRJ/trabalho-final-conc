@@ -1,18 +1,18 @@
 Resultados de execução (100 vértices - média de 2 execuções)
 ---------------------------------------------------------------
 arvore - bfsSeq: 0.001s
-arvore - bfsConcEstat (2 threads): 0.002s
-arvore - bfsConcEstat (4 threads): 0.001s
-arvore - bfsConcEstat (8 threads): 0.002s
-arvore - bfsConcEstat (16 threads): 0.003s
+arvore - bfsConcEstat (2 threads): 0.001s
+arvore - bfsConcEstat (4 threads): 0.002s
+arvore - bfsConcEstat (8 threads): 0.004s
+arvore - bfsConcEstat (16 threads): 0.004s
 arvore - bfsConcDin (2 threads): 0.001s
 arvore - bfsConcDin (4 threads): 0.001s
-arvore - bfsConcDin (8 threads): 0.001s
+arvore - bfsConcDin (8 threads): 0.002s
 arvore - bfsConcDin (16 threads): 0.002s
 
 arvoreBinaria - bfsSeq: 0.001s
-arvoreBinaria - bfsConcEstat (2 threads): 0.001s
-arvoreBinaria - bfsConcEstat (4 threads): 0.002s
+arvoreBinaria - bfsConcEstat (2 threads): 0.002s
+arvoreBinaria - bfsConcEstat (4 threads): 0.003s
 arvoreBinaria - bfsConcEstat (8 threads): 0.004s
 arvoreBinaria - bfsConcEstat (16 threads): 0.007s
 arvoreBinaria - bfsConcDin (2 threads): 0.001s
@@ -21,52 +21,52 @@ arvoreBinaria - bfsConcDin (8 threads): 0.001s
 arvoreBinaria - bfsConcDin (16 threads): 0.002s
 
 grafoConexo - bfsSeq: 0.001s
-grafoConexo - bfsConcEstat (2 threads): 0.003s
+grafoConexo - bfsConcEstat (2 threads): 0.002s
 grafoConexo - bfsConcEstat (4 threads): 0.002s
-grafoConexo - bfsConcEstat (8 threads): 0.002s
+grafoConexo - bfsConcEstat (8 threads): 0.003s
 grafoConexo - bfsConcEstat (16 threads): 0.005s
 grafoConexo - bfsConcDin (2 threads): 0.002s
-grafoConexo - bfsConcDin (4 threads): 0.001s
+grafoConexo - bfsConcDin (4 threads): 0.002s
 grafoConexo - bfsConcDin (8 threads): 0.002s
-grafoConexo - bfsConcDin (16 threads): 0.002s
+grafoConexo - bfsConcDin (16 threads): 0.003s
 
 arvoreLarga - bfsSeq: 0.001s
 arvoreLarga - bfsConcEstat (2 threads): 0.001s
-arvoreLarga - bfsConcEstat (4 threads): 0.001s
-arvoreLarga - bfsConcEstat (8 threads): 0.003s
+arvoreLarga - bfsConcEstat (4 threads): 0.002s
+arvoreLarga - bfsConcEstat (8 threads): 0.004s
 arvoreLarga - bfsConcEstat (16 threads): 0.004s
 arvoreLarga - bfsConcDin (2 threads): 0.001s
 arvoreLarga - bfsConcDin (4 threads): 0.001s
-arvoreLarga - bfsConcDin (8 threads): 0.001s
-arvoreLarga - bfsConcDin (16 threads): 0.002s
+arvoreLarga - bfsConcDin (8 threads): 0.002s
+arvoreLarga - bfsConcDin (16 threads): 0.001s
 
 grafoCiclo - bfsSeq: 0.001s
-grafoCiclo - bfsConcEstat (2 threads): 0.006s
-grafoCiclo - bfsConcEstat (4 threads): 0.019s
+grafoCiclo - bfsConcEstat (2 threads): 0.007s
+grafoCiclo - bfsConcEstat (4 threads): 0.018s
 grafoCiclo - bfsConcEstat (8 threads): 0.037s
-grafoCiclo - bfsConcEstat (16 threads): 0.072s
+grafoCiclo - bfsConcEstat (16 threads): 0.075s
 grafoCiclo - bfsConcDin (2 threads): 0.001s
 grafoCiclo - bfsConcDin (4 threads): 0.001s
 grafoCiclo - bfsConcDin (8 threads): 0.001s
 grafoCiclo - bfsConcDin (16 threads): 0.002s
 
-grafoCompleto - bfsSeq: 0.001s
+grafoCompleto - bfsSeq: 0.002s
 grafoCompleto - bfsConcEstat (2 threads): 0.002s
-grafoCompleto - bfsConcEstat (4 threads): 0.004s
+grafoCompleto - bfsConcEstat (4 threads): 0.002s
 grafoCompleto - bfsConcEstat (8 threads): 0.004s
 grafoCompleto - bfsConcEstat (16 threads): 0.005s
 grafoCompleto - bfsConcDin (2 threads): 0.002s
 grafoCompleto - bfsConcDin (4 threads): 0.002s
-grafoCompleto - bfsConcDin (8 threads): 0.002s
-grafoCompleto - bfsConcDin (16 threads): 0.004s
+grafoCompleto - bfsConcDin (8 threads): 0.003s
+grafoCompleto - bfsConcDin (16 threads): 0.003s
 
 grafoLinear - bfsSeq: 0.001s
 grafoLinear - bfsConcEstat (2 threads): 0.006s
 grafoLinear - bfsConcEstat (4 threads): 0.016s
 grafoLinear - bfsConcEstat (8 threads): 0.037s
-grafoLinear - bfsConcEstat (16 threads): 0.081s
+grafoLinear - bfsConcEstat (16 threads): 0.083s
 grafoLinear - bfsConcDin (2 threads): 0.001s
 grafoLinear - bfsConcDin (4 threads): 0.001s
-grafoLinear - bfsConcDin (8 threads): 0.001s
+grafoLinear - bfsConcDin (8 threads): 0.002s
 grafoLinear - bfsConcDin (16 threads): 0.002s
 

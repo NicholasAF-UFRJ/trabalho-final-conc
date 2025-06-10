@@ -2,7 +2,7 @@
 
 Arquivo execução do algoritmo de busca em largura (BFS) sequencial.
 
-Entrada: ./bfsSeq <arquivo_grafo> [vertice_inicial] [IMPRIME]
+Entrada: ./bfsSeq <arquivo_grafo> [vertice_inicial] [imprime]
 
 Saída: Imprime o tempo total para calcular BFS sequencial 
 e imprime os vértices visitados se solicitado.
@@ -13,6 +13,7 @@ e imprime os vértices visitados se solicitado.
 #include <stdlib.h>
 #include <time.h>
 #define TAM 10000 
+#define IMPRIME
 
 // Estrutura da fila circular usada na BFS
 struct fila {
@@ -121,16 +122,16 @@ void liberarGrafo(struct grafo* grafo) {
 }
 
 // Algoritmo de busca em largura (BFS) 
-void bfs(struct grafo* grafo, int verticeInicio, int imprimir) {
+void bfs(struct grafo* grafo, int verticeInicio) {
     struct fila* fila = criaFila();
     grafo->visitado[verticeInicio] = 1;
     enfileirar(fila, verticeInicio);
 
     while (!ehVazio(fila)) {
         int verticeAtual = tiraFila(fila);
-        if (imprimir) {
+        #ifdef IMPRIME
             printf("visitado %d\n", verticeAtual);
-        }
+        #endif
 
         struct no* temp = grafo->listaAdj[verticeAtual];
         while (temp) {
@@ -173,29 +174,17 @@ struct grafo* lerGrafoBinario(const char* nomeArquivo) {
 }
 
 int main(int argc, char *argv[]) {
+
     clock_t tempoInicio, tempoFinal;
     tempoInicio = clock();
 
     if (argc < 2) {
-        printf("Uso: %s <arquivo_grafo> [vertice_inicial] [imprime]\n", argv[0]);
+        printf("Uso: %s <arquivo_grafo> [vertice_inicial]\n", argv[0]);
         return 1;
     }
 
     const char* nomeArquivo = argv[1];
-    int verticeInicial = 0;
-    int imprimir = 0;
-
-    // Se o segundo argumento não começa com "-" assume que é o vértice inicial
-    if (argc >= 3 && argv[2][0] != '-') {
-        verticeInicial = atoi(argv[2]);
-    }
-
-    // Verifica se "imprime" foi passado como argumento
-    for (int i = 2; i < argc; i++) {
-        if (strcmp(argv[i], "imprime") == 0) {
-            imprimir = 1;
-        }
-    }
+    int verticeInicial = (argc >= 3) ? atoi(argv[2]) : 0;
 
     struct grafo* grafo = lerGrafoBinario(nomeArquivo);
 
@@ -204,13 +193,14 @@ int main(int argc, char *argv[]) {
         liberarGrafo(grafo);
         return 1;
     }
-
-    bfs(grafo, verticeInicial, imprimir);
+    
+    bfs(grafo, verticeInicial);
 
     tempoFinal = clock();
     double tempoTotal = (double)(tempoFinal - tempoInicio) / CLOCKS_PER_SEC;
     printf("Tempo total para calcular BFS sequencial: %.3lf segundos\n", tempoTotal);
 
     liberarGrafo(grafo);
+
     return 0;
 }
